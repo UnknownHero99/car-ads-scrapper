@@ -11,6 +11,7 @@ class Car(scrapy.Item):
     page = scrapy.Field()
     url = scrapy.Field()
     capture_date = scrapy.Field()
+    manufacturer = scrapy.Field()
     model = scrapy.Field()
     price = scrapy.Field()
     manufacturing_year = scrapy.Field()

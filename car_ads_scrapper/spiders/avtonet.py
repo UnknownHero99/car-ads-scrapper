@@ -35,8 +35,9 @@ class BolhaSpider(scrapy.Spider):
         loader.add_value('capture_date', now.isoformat())
         loader.add_value('url', response.url)
 
-        model = response.xpath('//div[contains(@class, "container")]//h3/text()').extract_first()
-        loader.add_value('model', model)
+        model = response.xpath('//div[contains(@class, "container")]//h3/text()').extract_first().strip().split("\xa0")
+        loader.add_value('manufacturer', model[0])
+        loader.add_value('model', model[-1])
 
         price = response.xpath('//div[contains(@class, "h-100")]//p/text()').extract_first().strip()
         if not price:

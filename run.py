@@ -18,7 +18,7 @@ import os
 import smtplib
 
 now = datetime.now()
-columns_ordering = ["new","points","price", "location", "size", "url", "distance", "active", "first_capture_date", "last_capture_date", "found_location", "built", "floor", "page", "text"]
+columns_ordering = ["new","points","price", "location", "url", "distance", "active", "first_capture_date", "last_capture_date", "found_location", "page", "text"]
 
 def execute_spiders(urls, scrape_file):
 
@@ -142,6 +142,7 @@ def analyze_data(name, ignore_list, calculate_points, distance_from, scrape_file
 
 
 def clear_location(location):
+     location = str(location)
      locations = location.lower().replace("-", ",").replace("lj.", "ljubljana,").split(",")
      return ",".join([x for x in locations if x.find("lokac") == -1])
 

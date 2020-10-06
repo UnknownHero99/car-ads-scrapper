@@ -10,7 +10,7 @@ import datetime
 from scrapy.exporters import CsvItemExporter
 from scrapy import signals
 
-column_order = ["page","capture_date","is_dealership","model","price","manufacturing_year","kilometrage","engine_displacement","engine_power","fuel","transmission","doors","color","location","url","text"]
+column_order = ["page","capture_date","is_dealership","manufacturer","model","price","manufacturing_year","kilometrage","engine_displacement","engine_power","fuel","transmission","doors","color","location","url","text"]
 
 now = datetime.datetime.now()
 
