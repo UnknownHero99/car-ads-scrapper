@@ -7,6 +7,7 @@ from datetime import datetime
 import csv
 
 now = datetime.now()
+avtolog_url="https://avtolog.si/search/{vin}"
 
 class BolhaSpider(scrapy.Spider):
     name = 'avtonet'
@@ -55,6 +56,9 @@ class BolhaSpider(scrapy.Spider):
                 continue
             value = " ".join(value.split())
             title = title.strip()
+            if "VIN" in title:
+                loader.add_value('vin', value)
+                loader.add_value('avtolog_url', avtolog_url.format(vin=value))
             if "Leto proizvodnje:" in title:
                 loader.add_value('manufacturing_year', value)
             if "Motor" in title:
@@ -69,6 +73,8 @@ class BolhaSpider(scrapy.Spider):
                 loader.add_value('kilometrage', value)
             if "Št.vrat" in title:
                 loader.add_value('doors', value)
+            if "Notranjost" in title:
+                loader.add_value('interior', value)
             if "Barva" in title:
                 loader.add_value('color', value)
             if "Kraj ogleda" in title:
