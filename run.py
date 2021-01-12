@@ -18,7 +18,7 @@ import os
 import smtplib
 
 now = datetime.now()
-columns_ordering = ["new","points","price", "location", "url", "distance", "active", "first_capture_date", "last_capture_date", "found_location", "page", "text"]
+columns_ordering = ["new","points","price","manufacturer","model", "location", "url", "distance", "active", "first_capture_date", "last_capture_date", "found_location", "page","is_dealership","vin","avtolog_url","price","manufacturing_year","kilometrage","engine_displacement","engine_power","fuel","transmission","doors","color","interior","location","url","text"]
 
 def execute_spiders(urls, scrape_file):
 
@@ -189,8 +189,8 @@ def send_mail(gmail_user, gmail_password, to, message):
         print('Something went wrong...')
 
 def main(name, urls, ignore_list, calculate_points, distance_from, scrape_file, archive_data_file, print_columns, mails = None):
-    if os.path.exists(scrape_file):
-        os.remove(scrape_file)
-    execute_spiders(urls, scrape_file)
+    # if os.path.exists(scrape_file):
+    #     os.remove(scrape_file)
+    # execute_spiders(urls, scrape_file)
     data = analyze_data(name, ignore_list, calculate_points, distance_from, scrape_file, archive_data_file, print_columns)
     return data
