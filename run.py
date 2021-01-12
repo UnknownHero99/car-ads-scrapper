@@ -189,8 +189,8 @@ def send_mail(gmail_user, gmail_password, to, message):
         print('Something went wrong...')
 
 def main(name, urls, ignore_list, calculate_points, distance_from, scrape_file, archive_data_file, print_columns, mails = None):
-    # if os.path.exists(scrape_file):
-    #     os.remove(scrape_file)
-    # execute_spiders(urls, scrape_file)
+    if os.path.exists(scrape_file):
+        os.remove(scrape_file)
+    execute_spiders(urls, scrape_file)
     data = analyze_data(name, ignore_list, calculate_points, distance_from, scrape_file, archive_data_file, print_columns)
     return data
