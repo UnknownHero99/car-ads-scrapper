@@ -15,8 +15,6 @@ print_columns = ["points","manufacturer","model", "price","manufacturing_year","
 
 
 def calculate_points(Ad):
-    if not Ad["active"]:
-        return 0
     points = 0
     if Ad["is_dealership"]:
         points += 10
@@ -41,6 +39,8 @@ def calculate_points(Ad):
     else:
         old = 0
 
+    if not Ad["active"]:
+        points -= 1000
 
     return points
 
