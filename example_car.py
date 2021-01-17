@@ -13,8 +13,55 @@ scrape_file = "scraped_data/" + name + ".csv"
 archive_data_file = "archive_data/" + name + ".csv"
 print_columns = ["points","manufacturer","model", "price","manufacturing_year","kilometrage","avtolog_url","location", "captured_today", "url"]
 
+scoring_map = {
+    "price": {
+        "type": "reverse",
+        "points_per_unit": 1
+    },
+    "manufacturing_year": {
+        "type": "normal",
+        "points_per_unit": 200
+        },
+    "kilometrage": {
+        "type": "reverse",
+        "points_per_unit": 50/10000,
+        },
+    "is_dealership": {
+        "type": "map",
+        "points_map": {False:0,True:200}
+        },
+    "manufacturer": {
+        "type": "contains",
+        "values": ["chevrolet","citroen"],
+        "points":-1500
+        },
+    "model": {
+        "type": "contains",
+        "values": ["clio", "getz", "megane","207","modus","107","i10","aygo","colt", "fiesta","grand modus"],
+        "points": -1500
+        },
+    "model": {
+        "type": "contains",
+        "values": ["ceed","i30"],
+        "points": 750
+        },
+    "captured_today": {
+        "type": "map",
+        "points_map": {False:-200,True:0}
+        },
+    "distance": {
+        "type": "reverse",
+        "points_per_unit": 200/50,
+        },
+    "active": {
+        "type": "cutoff",
+        },
+    }
+
+
+
 #what is the expected range of values -> for normalization
-value_ranges = {"price":[2000,3500],"manufacturing_year":[2007,2015],"kilometrage":[100000,250000]}
+value_ranges = {"price": [2000,3500],"manufacturing_year": [2007,2015],"kilometrage": [100000,250000]}
 # how many points do we want one unit to give -> points more this will be based entirely on the value_ranges -Y if they are incorect this will be too.
 points_evaluation = {"price": 1, "manufacturing_year": 200, "kilometrage": 50/10000}
 # this means 1 € cheaper is 1 point, 1 year younger is 200 points more and 10000 kilometers less is 50 points more
@@ -28,22 +75,21 @@ def reverse_value(value):
     return 1 - value
 
 def get_points(value, value_range, points_per_unit, reverse = False):
-    points = normalize(value,value_range) 
+    points = normalize(value,value_range)
     if reverse:
-        points = reverse_value(points) 
+        points = reverse_value(points)
     points =  points * (value_range[1] - value_range[0]) * points_per_unit
     #print("Points: {}, value: {}, range: {}".format(points, value, str(value_range)))
     if points < 0:
         return 0
     return points
 
-
 def calculate_points(Ad):
     points = 0
     if Ad["is_dealership"]:
-        points += 20
+        points += 200
     if Ad["vin"]:
-        points += 20
+        points += 200
 
     for c in value_ranges:
         i = 0
@@ -69,14 +115,12 @@ def calculate_points(Ad):
     if not Ad["active"]:
         points -= 5000
 
-
     return points
 
+calculate_points = None
+data = main(name, scrap_urls, ignore_list, distance_from,scrape_file, archive_data_file, print_columns ,calculate_points = calculate_points, scoring_map = scoring_map )
+data = analyze_data(name, ignore_list, distance_from, scrape_file, archive_data_file, print_columns, calculate_points = calculate_points, scoring_map = scoring_map)
 
-#data = main(name, scrap_urls, ignore_list, calculate_points, distance_from,scrape_file, archive_data_file, print_columns )
 
-data = analyze_data(name, ignore_list, calculate_points, distance_from, scrape_file, archive_data_file, print_columns)
-
-
-message = "#####NEW: \n" +data["new"] +  "\n######TOP 20:\n" + data["top20"]
+#message = "#####NEW: \n" +data["new"] +  "\n######TOP 20:\n" + data["top20"]
 #send_mail(gmail_user, gmail_password,to, message)

@@ -20,6 +20,52 @@ import smtplib
 now = datetime.now()
 columns_ordering = ["new","points","price","manufacturer","model", "location", "url", "distance", "active", "first_capture_date", "last_capture_date", "found_location", "page","is_dealership","vin","avtolog_url","price","manufacturing_year","kilometrage","engine_displacement","engine_power","fuel","transmission","doors","color","interior","location","url","text"]
 
+
+default_scoring_map = {
+    "price": {
+        "type": "reverse",
+        "points_per_unit": 1
+    },
+    "manufacturing_year": {
+        "type": "normal",
+        "points_per_unit": 200
+        },
+    "kilometrage": {
+        "type": "reverse",
+        "points_per_unit": 50/10000
+        },
+    "is_dealership": {
+        "type": "map",
+        "points_map": {False:0,True:200}
+        },
+    "manufacturer": {
+        "type": "contains",
+        "values": ["chevrolet","citroen"],
+        "points":-1500
+        },
+    "model": {
+        "type": "contains",
+        "values": ["clio", "getz", "megane","207","modus","107","i10","aygo","colt", "fiesta","grand modus"],
+        "points": -1500
+        },
+    "model": {
+        "type": "contains",
+        "values": ["ceed","i30"],
+        "points": 750
+        },
+    "captured_today": {
+        "type": "map",
+        "points_map": {False:-200,True:0}
+        },
+    "distance": {
+        "type": "reverse",
+        "points_per_unit": 200/50,
+        },
+    "active": {
+        "type": "cutoff",
+        },
+    }
+
 def execute_spiders(urls, scrape_file):
 
     process = CrawlerProcess(get_project_settings())
@@ -47,8 +93,7 @@ def execute_spiders(urls, scrape_file):
             print("  Errors in spider " + spider.name + "!!!")
         print()
 
-
-def analyze_data(name, ignore_list, calculate_points, distance_from, scrape_file, archive_data_file, print_columns):
+def analyze_data(name, ignore_list, distance_from, scrape_file, archive_data_file, print_columns, scoring_map = None, calculate_points = None):
     print("###############")
     print("Getting data for analysis")
 
@@ -110,7 +155,11 @@ def analyze_data(name, ignore_list, calculate_points, distance_from, scrape_file
 
     print("###############")
     print("Calculating points")
-    current_data["points"] = current_data.apply(lambda x: calculate_points(x), axis=1)
+
+    if scoring_map:
+        current_data = score_dataset(current_data, scoring_map)
+    else:
+        current_data["points"] = current_data.apply(lambda x: calculate_points(x), axis=1)
 
     print("###############")
     print("sorting and storing data")
@@ -140,7 +189,6 @@ def analyze_data(name, ignore_list, calculate_points, distance_from, scrape_file
     output = {"all":sorted_list, "new":sorted_list.loc[sorted_list.new, print_columns].to_string(index=False), "top20": sorted_list[print_columns].head(20).to_string(index=False)}
     return output
 
-
 def clear_location(location):
      location = str(location)
      locations = location.lower().replace("-", ",").replace("lj.", "ljubljana,").split(",")
@@ -164,6 +212,29 @@ def get_distance(location, center):
         distance = -1
     return distance
 
+def score_dataset(current_data, scoring_map):
+    current_data["points"] = 0
+
+    cutoff_field = ''
+    for field in scoring_map:
+        if scoring_map[field]["type"] == "normal":
+            current_data["points"] += (current_data[field] - current_data[field].min()) * scoring_map[field]["points_per_unit"]
+        elif scoring_map[field]["type"] == "reverse":
+            current_data["points"] += (current_data[field].max() - current_data[field] ) * scoring_map[field]["points_per_unit"]
+        elif scoring_map[field]["type"] == "map":
+            current_data["points"] += current_data[field].map(scoring_map[field]["points_map"])
+        elif scoring_map[field]["type"] == "contains":
+            for value in scoring_map[field]["values"]:
+                current_data.loc[current_data[field].str.lower().str.contains(value.lower()),"points"] += scoring_map[field]["points"]
+        elif scoring_map[field]["type"] == "cutoff":
+            cutoff_field = field
+
+    current_data.loc[current_data["points"] < 0,"points"] = 0
+    current_data["points"] = (current_data["points"] - current_data["points"].min()) /  (current_data["points"].max() - current_data["points"].min())  * 100
+    if cutoff_field:
+        current_data.loc[current_data[cutoff_field],"points"] = - current_data.loc[current_data[cutoff_field],"points"]
+
+    return current_data
 
 def send_mail(gmail_user, gmail_password, to, message):
 
@@ -188,9 +259,9 @@ def send_mail(gmail_user, gmail_password, to, message):
     except:
         print('Something went wrong...')
 
-def main(name, urls, ignore_list, calculate_points, distance_from, scrape_file, archive_data_file, print_columns, mails = None):
+def main(name, urls, ignore_list, distance_from, scrape_file, archive_data_file, print_columns, mails = None, calculate_points = None, scoring_map = default_scoring_map):
     if os.path.exists(scrape_file):
         os.remove(scrape_file)
     execute_spiders(urls, scrape_file)
-    data = analyze_data(name, ignore_list, calculate_points, distance_from, scrape_file, archive_data_file, print_columns)
+    data = analyze_data(name, ignore_list, distance_from, scrape_file, archive_data_file, print_columns, calculate_points = calculate_points, scoring_map = scoring_map)
     return data
