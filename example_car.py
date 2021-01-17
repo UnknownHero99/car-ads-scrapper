@@ -58,65 +58,6 @@ scoring_map = {
         },
     }
 
-
-
-#what is the expected range of values -> for normalization
-value_ranges = {"price": [2000,3500],"manufacturing_year": [2007,2015],"kilometrage": [100000,250000]}
-# how many points do we want one unit to give -> points more this will be based entirely on the value_ranges -Y if they are incorect this will be too.
-points_evaluation = {"price": 1, "manufacturing_year": 200, "kilometrage": 50/10000}
-# this means 1 € cheaper is 1 point, 1 year younger is 200 points more and 10000 kilometers less is 50 points more
-
-points_reversal = {"price":True, "manufacturing_year":False, "kilometrage":True}# if true less is better
-
-def normalize(value, value_range):
-    return (value - value_range[0]) / (value_range[1] - value_range[0])
-
-def reverse_value(value):
-    return 1 - value
-
-def get_points(value, value_range, points_per_unit, reverse = False):
-    points = normalize(value,value_range)
-    if reverse:
-        points = reverse_value(points)
-    points =  points * (value_range[1] - value_range[0]) * points_per_unit
-    #print("Points: {}, value: {}, range: {}".format(points, value, str(value_range)))
-    if points < 0:
-        return 0
-    return points
-
-def calculate_points(Ad):
-    points = 0
-    if Ad["is_dealership"]:
-        points += 200
-    if Ad["vin"]:
-        points += 200
-
-    for c in value_ranges:
-        i = 0
-        if points_reversal[c]:
-            i = 1
-        points += get_points(Ad.get(c,value_ranges[c][1]),value_ranges[c], points_evaluation[c], points_reversal[c])
-
-    if Ad.get("distance",60) > 50:
-        points += -20
-
-    if Ad["manufacturer"].lower() in ("chevrolet","citroen") or Ad["model"].lower() in ("clio", "getz", "megane","207","modus","107","i10","aygo","colt", "fiesta","grand modus"):
-        points += -1500
-
-    if Ad["manufacturer"].lower() in ("") or Ad["model"].lower() in ("ceed","i30"):
-        points += 750
-
-
-    if not Ad["captured_today"]:
-        old = -50
-    else:
-        old = 0
-
-    if not Ad["active"]:
-        points -= 5000
-
-    return points
-
 calculate_points = None
 data = main(name, scrap_urls, ignore_list, distance_from,scrape_file, archive_data_file, print_columns ,calculate_points = calculate_points, scoring_map = scoring_map )
 data = analyze_data(name, ignore_list, distance_from, scrape_file, archive_data_file, print_columns, calculate_points = calculate_points, scoring_map = scoring_map)
