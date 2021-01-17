@@ -138,6 +138,8 @@ def analyze_data(name, ignore_list, distance_from, scrape_file, archive_data_fil
         ignore_word = ignore_word.lower()
         print(ignore_word)
         current_data = current_data.loc[~(current_data.text.astype(str).str.lower().str.contains(ignore_word))]
+        current_data = current_data.loc[~(current_data.manufacturer.astype(str).str.lower().str.contains(ignore_word))]
+        current_data = current_data.loc[~(current_data.model.astype(str).str.lower().str.contains(ignore_word))]
         current_data = current_data.loc[~current_data.location.str.contains(ignore_word)]
     print("###############")
     print("Finding locations")
@@ -218,9 +220,9 @@ def score_dataset(current_data, scoring_map):
     cutoff_field = ''
     for field in scoring_map:
         if scoring_map[field]["type"] == "normal":
-            current_data["points"] += (current_data[field] - current_data[field].min()) * scoring_map[field]["points_per_unit"]
+            current_data["points"] += (current_data.get(field,current_data[field].min()) - current_data[field].min()) * scoring_map[field]["points_per_unit"]
         elif scoring_map[field]["type"] == "reverse":
-            current_data["points"] += (current_data[field].max() - current_data[field] ) * scoring_map[field]["points_per_unit"]
+            current_data["points"] += (current_data[field].max() - current_data.get(field,current_data[field].max()) ) * scoring_map[field]["points_per_unit"]
         elif scoring_map[field]["type"] == "map":
             current_data["points"] += current_data[field].map(scoring_map[field]["points_map"])
         elif scoring_map[field]["type"] == "contains":
@@ -232,8 +234,8 @@ def score_dataset(current_data, scoring_map):
     current_data.loc[current_data["points"] < 0,"points"] = 0
     current_data["points"] = (current_data["points"] - current_data["points"].min()) /  (current_data["points"].max() - current_data["points"].min())  * 100
     if cutoff_field:
-        current_data.loc[current_data[cutoff_field],"points"] = - current_data.loc[current_data[cutoff_field],"points"]
-
+        current_data.loc[~current_data[cutoff_field],"points"] = - current_data.loc[~current_data[cutoff_field],"points"]
+    current_data["points"] = current_data["points"].fillna(0)
     return current_data
 
 def send_mail(gmail_user, gmail_password, to, message):
