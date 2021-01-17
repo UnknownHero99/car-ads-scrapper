@@ -29,42 +29,43 @@ default_scoring_map = {
     "manufacturing_year": {
         "type": "normal",
         "points_per_unit": 200
-        },
+    },
     "kilometrage": {
         "type": "reverse",
-        "points_per_unit": 50/10000
-        },
+        "points_per_unit": 50/10000,
+    },
     "is_dealership": {
         "type": "map",
         "points_map": {False:0,True:200}
-        },
+    },
     "manufacturer": {
         "type": "contains",
         "values": ["chevrolet","citroen"],
-        "points":-1500
-        },
-    "model": {
-        "type": "contains",
-        "values": ["clio", "getz", "megane","207","modus","107","i10","aygo","colt", "fiesta","grand modus"],
         "points": -1500
+    },
+    "model": [
+        {
+            "type": "contains",
+            "values": ["ceed","i30"],
+            "points": 750
         },
-    "model": {
-        "type": "contains",
-        "values": ["ceed","i30"],
-        "points": 750
-        },
+        {
+            "type": "contains",
+            "values": ["clio", "getz", "megane","207","modus","107","i10","aygo","colt", "fiesta"],
+            "points": -1500
+        }],
     "captured_today": {
         "type": "map",
         "points_map": {False:-200,True:0}
-        },
+    },
     "distance": {
         "type": "reverse",
         "points_per_unit": 200/50,
-        },
+    },
     "active": {
         "type": "cutoff",
-        },
-    }
+    },
+}
 
 def execute_spiders(urls, scrape_file):
 
@@ -219,17 +220,21 @@ def score_dataset(current_data, scoring_map):
 
     cutoff_field = ''
     for field in scoring_map:
-        if scoring_map[field]["type"] == "normal":
-            current_data["points"] += (current_data.get(field,current_data[field].min()) - current_data[field].min()) * scoring_map[field]["points_per_unit"]
-        elif scoring_map[field]["type"] == "reverse":
-            current_data["points"] += (current_data[field].max() - current_data.get(field,current_data[field].max()) ) * scoring_map[field]["points_per_unit"]
-        elif scoring_map[field]["type"] == "map":
-            current_data["points"] += current_data[field].map(scoring_map[field]["points_map"])
-        elif scoring_map[field]["type"] == "contains":
-            for value in scoring_map[field]["values"]:
-                current_data.loc[current_data[field].str.lower().str.contains(value.lower()),"points"] += scoring_map[field]["points"]
-        elif scoring_map[field]["type"] == "cutoff":
-            cutoff_field = field
+        scoring_list = scoring_map[field]
+        if not type(scoring_list) == list:
+            scoring_list = [scoring_list]
+        for scoring in scoring_list:
+            if scoring["type"] == "normal":
+                current_data["points"] += (current_data.get(field,current_data[field].min()) - current_data[field].min()) * scoring["points_per_unit"]
+            elif scoring["type"] == "reverse":
+                current_data["points"] += (current_data[field].max() - current_data.get(field,current_data[field].max()) ) * scoring["points_per_unit"]
+            elif scoring["type"] == "map":
+                current_data["points"] += current_data[field].map(scoring["points_map"])
+            elif scoring["type"] == "contains":
+                for value in scoring["values"]:
+                    current_data.loc[current_data[field].str.lower().str.contains(value.lower()),"points"] += scoring["points"]
+            elif scoring["type"] == "cutoff":
+                cutoff_field = field
 
     current_data.loc[current_data["points"] < 0,"points"] = 0
     current_data["points"] = (current_data["points"] - current_data["points"].min()) /  (current_data["points"].max() - current_data["points"].min())  * 100
