@@ -199,21 +199,27 @@ def clear_location(location):
 
 def find_location(location, center):
     locations = location.split(",")
-    loc = geocoder.osm(location)
-    if (not loc.ok or loc.city != center.city) and len(locations) > 1:
-        loc = geocoder.osm(center.city + "," + locations[-1])
-    if (not loc.ok or loc.city != center.city) and len(locations) > 2:
-        loc = geocoder.osm(center.city + "," + locations[-2])
-    if not loc.ok:
-        loc = geocoder.osm(center.city)
-    return loc
+    try:
+        loc = geocoder.osm(location)
+        if (not loc.ok or loc.city != center.city) and len(locations) > 1:
+            loc = geocoder.osm(center.city + "," + locations[-1])
+        if (not loc.ok or loc.city != center.city) and len(locations) > 2:
+            loc = geocoder.osm(center.city + "," + locations[-2])
+        if not loc.ok:
+            loc = geocoder.osm(center.city)
+        return loc
+    except:
+        return None
 
 def get_distance(location, center):
-    if location.country == center.country and location != center:
-        distance = geocoder.distance(center, location)
-    else:
-        distance = -1
-    return distance
+    try:
+        if location.country == center.country and location != center:
+            distance = geocoder.distance(center, location)
+        else:
+            distance = -1
+        return distance
+    except:
+        return -1
 
 def score_dataset(current_data, scoring_map):
     current_data["points"] = 0
