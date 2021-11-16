@@ -12,6 +12,9 @@ avtolog_url="https://avtolog.si/search/{vin}"
 class BolhaSpider(scrapy.Spider):
     name = 'avtonet'
     allowed_domains = ['avto.net']
+    custom_settings = {}
+    custom_settings["DOWNLOAD_DELAY"] = 10
+    custom_settings["CONCURRENT_REQUESTS"] = 1
 
     def __init__(self, url=None, scrape_file=None, export_headers=True, *args, **kwargs):
         super(BolhaSpider, self).__init__(*args, **kwargs)

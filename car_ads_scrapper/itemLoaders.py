@@ -12,6 +12,7 @@ def parseSize(values):
 
 def parsePrice(values):
     for value in values:
+        value = str(value)
         number = value.split(" ")[0].strip().replace(".", "").replace(",",".").replace('"','')
         yield float(number)
 

@@ -27,7 +27,7 @@ class CSVPipeline(object):
     return pipeline
 
   def spider_opened(self, spider):
-    filename = spider.scrape_file if spider.scrape_file else spider.config_name
+    filename = spider.scrape_file if spider.scrape_file else spider.name
     file = open(filename, 'a+b')
     self.files[spider] = file
     self.exporter = CsvItemExporter(file, spider.export_headers)
